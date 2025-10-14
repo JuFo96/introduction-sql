@@ -1,12 +1,12 @@
-DROP DATABASE IF EXISTS db;
-CREATE DATABASE IF NOT EXISTS db;
+DROP TABLE IF EXISTS orders_combined;
 
-CREATE TABLE `orders_combined` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `date_time` DATETIME,
-    `customer_name` VARCHAR(40),
-    `customer_email` VARCHAR(40),
-    `product_name` VARCHAR(255),
-    `product_price` DECIMAL(10, 2),
-     PRIMARY KEY (`id`)
+CREATE TABLE orders_combined (
+    id INT NOT NULL,
+    date_time DATETIME,
+    customer_name VARCHAR(40),
+    customer_email VARCHAR(40),
+    product_name VARCHAR(255),
+    product_price DECIMAL(10, 2),
+    PRIMARY KEY (id)
 );
+
