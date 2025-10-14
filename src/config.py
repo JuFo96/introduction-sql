@@ -1,4 +1,5 @@
 from pathlib import Path
+from dataclasses import dataclass, asdict
 
 # Directories
 BASE_DIR = Path(__file__).parent.parent.resolve()
@@ -19,3 +20,12 @@ CREATE_ORDERS_COMBINED = BASE_DIR / SQL_DIR / "create_orders_combined.sql"
 
 # DB
 DB_NAME = "dbs"
+
+
+@dataclass
+class DatabaseConfig:
+    host: str
+    port: int
+    user: str
+    password: str
+    database: str | None
