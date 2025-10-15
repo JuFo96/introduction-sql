@@ -29,8 +29,12 @@ class CRUD:
             if col not in self.valid_columns:
                 raise ValueError(f"Invalid column: {col} is not in valid columns: {self.valid_columns}")
 
-    def insert(self, values: list[str, Any], cols: list[str]) -> None:
+    def insert(self, data: dict[str, Any]) -> None:
         with self.connection.cursor() as cur:
+
+            cols = data.keys()
+            values = data.values()
+            self.validate_columns(cols)
 
             if cols == None:
                 sql_string = f"INSERT INTO {self.table_name} (id, date_time, customer_name, customer_email, product_name, product_price) VALUES (%s, %s, %s, %s, %s, %s)"
@@ -92,3 +96,6 @@ class CRUD:
 
     def remove_table():
         pass
+
+if __name__ == "__main__":
+    CRUD.insert([2, 2025, 3, 20, 11, 45, 43, 'Jess Stanton', 'jess.stanton@yahoo.com', 'Mouse', '443.55'])
