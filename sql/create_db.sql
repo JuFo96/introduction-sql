@@ -9,4 +9,3 @@ CREATE TABLE orders_combined (
     product_price DECIMAL(10, 2),
     PRIMARY KEY (id)
 );
-

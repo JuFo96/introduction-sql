@@ -9,7 +9,7 @@ Run:
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 from crud import CRUD
 
 
@@ -54,8 +54,8 @@ def test_validate_columns_with_invalid_column(crud):
     crud_instance, _, _ = crud
     
     # This should raise ValueError
-    with pytest.raises(ValueError, match="Invalid column: bad_column"):
-        crud_instance.validate_columns(["bad_column"])
+    with pytest.raises(ValueError, match="Invalid column: {'bad_column'}"):
+        crud_instance.validate_columns({"bad_column"})
 
 
 def test_validate_columns_with_mixed_columns(crud):
@@ -200,7 +200,7 @@ def test_valid_columns_list(crud):
     """Test that valid_columns contains expected columns."""
     crud_instance, _, _ = crud
     
-    expected_cols = ["id", "date_time", "customer_name", "customer_email", "product_name", "product_price"]
+    expected_cols = {"id", "date_time", "customer_name", "customer_email", "product_name", "product_price"}
     
     assert crud_instance.valid_columns == expected_cols
 

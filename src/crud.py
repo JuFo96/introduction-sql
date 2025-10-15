@@ -1,5 +1,5 @@
 
-from typing import Any
+from typing import Any, Iterable
 import config
 from mysql_db import DatabaseConnection, DatabaseConnectionConfig
 
@@ -12,22 +12,24 @@ class CRUD:
         self.table_name: str = table_name
         self.connection: DatabaseConnection = connection
         self.dbconfig: DatabaseConnectionConfig = config.dbconfig
-        self.valid_columns = ["id", "date_time", "customer_name", "customer_email", "product_name", "product_price"]
+        self.valid_columns = {"id", "date_time", "customer_name", "customer_email", "product_name", "product_price"}
 
 
-    def validate_columns(self, cols: list[str]) -> None:
+    def validate_columns(self, cols: Iterable[str]) -> None:
         """Validates supplied columns is in the whitelist columns to prevent sql injection
 
             Args:
-                cols: The user supplied list of columns to operate on
+                cols: The user supplied iterable of columns to operate on
 
             Raises: 
                 ValueError: If the column is not in the whitelist of column names.
 
         """
-        for col in cols:
-            if col not in self.valid_columns:
-                raise ValueError(f"Invalid column: {col} is not in valid columns: {self.valid_columns}")
+        invalid_cols = set(cols) - self.valid_columns
+        if invalid_cols:
+            raise ValueError(f"Invalid column: {invalid_cols} is not in valid columns: {self.valid_columns}")
+
+                
 
     def insert(self, data: dict[str, Any]) -> None:
         with self.connection.cursor() as cur:
@@ -98,4 +100,6 @@ class CRUD:
         pass
 
 if __name__ == "__main__":
-    CRUD.insert([2, 2025, 3, 20, 11, 45, 43, 'Jess Stanton', 'jess.stanton@yahoo.com', 'Mouse', '443.55'])
+    crud = CRUD("orders_combined", DatabaseConnection(config.dbconfig))
+    #CRUD.insert([2, 2025, 3, 20, 11, 45, 43, 'Jess Stanton', 'jess.stanton@yahoo.com', 'Mouse', '443.55'])
+    crud.validate_columns(cols = ["customer_emai", "123"])

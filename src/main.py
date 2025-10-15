@@ -59,7 +59,7 @@ def main():
     with DatabaseConnection(dbconfig) as db:
         crud = CRUD("orders_combined", db)
         #print(values[0])
-        crud.insert([6, 'egan', 'egan@B.com'], cols=["id", "customer_name", "customer_email"])
+        crud.insert(data={"id" : 6, "customer_name" : "egan", "customer_email" : "egan@B.com"})
     results = fetch_table("orders_combined", dbconfig)
     print_iterable(results)
 
