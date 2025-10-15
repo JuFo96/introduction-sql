@@ -17,6 +17,7 @@ class CRUD:
 
     def validate_columns(self, cols: Iterable[str]) -> None:
         """Validates supplied columns is in the whitelist columns to prevent sql injection
+        by applying the set difference operation.
 
             Args:
                 cols: The user supplied iterable of columns to operate on
@@ -32,23 +33,27 @@ class CRUD:
                 
 
     def insert(self, data: dict[str, Any]) -> None:
+        """Inserts data dictionary into the table
+
+        Args:
+            data: the dictionary containing column names and values to insert
+
+        Raises:
+            ValueError: If the dictionary is empty
+        """
         with self.connection.cursor() as cur:
+            if not data:
+                raise ValueError("Cannot insert empty data dictionary")
 
             cols = data.keys()
-            values = data.values()
             self.validate_columns(cols)
-
-            if cols == None:
-                sql_string = f"INSERT INTO {self.table_name} (id, date_time, customer_name, customer_email, product_name, product_price) VALUES (%s, %s, %s, %s, %s, %s)"
-                cur.execute(sql_string, values)
-            else:
-                self.validate_columns(cols)
-
-                column_string = ", ".join(cols)
-                num_cols = len(cols)
-                # ", ".join mimics (%s, %s, %s, %s, %s, %s) based on num_cols
-                sql_string = f"INSERT INTO {self.table_name} ({column_string}) VALUES ({', '.join(['%s'] * num_cols)})"
-                cur.execute(sql_string, values)
+            values = [data[col] for col in cols] 
+            
+            column_string = ", ".join(cols)
+            num_cols = len(cols)
+            # ", ".join() mimics (%s, %s) based on num_cols
+            sql_string = f"INSERT INTO {self.table_name} ({column_string}) VALUES ({', '.join(['%s'] * num_cols)})"
+            cur.execute(sql_string, values)
         self.connection.commit()
 
     def insertmany(self, values: dict[list[Any]]) -> None:
@@ -102,4 +107,4 @@ class CRUD:
 if __name__ == "__main__":
     crud = CRUD("orders_combined", DatabaseConnection(config.dbconfig))
     #CRUD.insert([2, 2025, 3, 20, 11, 45, 43, 'Jess Stanton', 'jess.stanton@yahoo.com', 'Mouse', '443.55'])
-    crud.validate_columns(cols = ["customer_emai", "123"])
+    #crud.validate_columns(cols = ["customer_emai", "123"])

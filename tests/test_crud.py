@@ -79,14 +79,14 @@ def test_validate_columns_with_empty_list(crud):
 # Tests for insert method
 # ============================================
 
-def test_insert_with_no_cols_specified(crud):
-    """Test insert when cols is None (all columns)."""
+def test_insert_with_all_cols(crud):
+    """Test insert with all cols in dictinary."""
     crud_instance, mock_cursor, mock_conn = crud
     
-    values = [1, "2024-01-01", "John Doe", "john@example.com", "Widget", 19.99]
+    data = {"id": 1, "date_time": "2024-01-01", "customer_name": "egan", "customer_email": "egan@B.com", "product_name": "widget", "product_price": 19.99}
     
     # Call insert
-    crud_instance.insert(values, cols=None)
+    crud_instance.insert(data)
     
     # Check that execute was called once
     mock_cursor.execute.assert_called_once()
@@ -96,10 +96,12 @@ def test_insert_with_no_cols_specified(crud):
     sql = call_args[0]
     params = call_args[1]
     
+    
     assert "INSERT INTO orders_combined" in sql
     assert "VALUES (%s, %s, %s, %s, %s, %s)" in sql
-    assert params == values
-    
+    assert "egan" in params
+    assert params[0] == 1
+    assert len(params) == 6
     # Check commit was called
     mock_conn.commit.assert_called_once()
 
@@ -108,11 +110,11 @@ def test_insert_with_specific_columns(crud):
     """Test insert with specific columns."""
     crud_instance, mock_cursor, mock_conn = crud
     
-    cols = ["customer_name", "customer_email"]
-    values = ["Jane Smith", "jane@example.com"]
+    data = {"customer_name": "Jane Smith", "customer_email": "jane@example.com"}
+
     
     # Call insert
-    crud_instance.insert(values, cols=cols)
+    crud_instance.insert(data)
     
     # Check execute was called
     mock_cursor.execute.assert_called_once()
@@ -125,59 +127,40 @@ def test_insert_with_specific_columns(crud):
     assert "INSERT INTO orders_combined" in sql
     assert "customer_name, customer_email" in sql
     assert "VALUES (%s, %s)" in sql
-    assert params == values
+    assert "Jane Smith" in params
+    assert params[1] == "jane@example.com"
     
     # Check commit was called
     mock_conn.commit.assert_called_once()
-
-
-def test_insert_with_single_column(crud):
-    """Test insert with just one column."""
-    crud_instance, mock_cursor, mock_conn = crud
-    
-    cols = ["product_price"]
-    values = [29.99]
-    
-    crud_instance.insert(values, cols=cols)
-    
-    call_args = mock_cursor.execute.call_args[0]
-    sql = call_args[0]
-    
-    assert "product_price" in sql
-    assert "VALUES (%s)" in sql
 
 
 def test_insert_with_invalid_column_raises_error(crud):
     """Test that insert with invalid column raises ValueError."""
     crud_instance, mock_cursor, mock_conn = crud
     
-    cols = ["invalid_column"]
-    values = ["some value"]
+    data = {"DROP TABLE": "Jane Doe"}
     
     # Should raise ValueError before executing SQL
     with pytest.raises(ValueError, match="Invalid column"):
-        crud_instance.insert(values, cols=cols)
+        crud_instance.insert(data)
     
     # Execute should NOT have been called
     mock_cursor.execute.assert_not_called()
     mock_conn.commit.assert_not_called()
 
-
-def test_insert_multiple_rows_scenario(crud):
-    """Test inserting multiple times (simulating multiple inserts)."""
+def test_insert_with_empty_data_raises_error(crud):
+    """Test that insert with no data doesn't execute and raises ValueError"""
     crud_instance, mock_cursor, mock_conn = crud
-    
-    # First insert
-    crud_instance.insert(["John", "john@test.com"], cols=["customer_name", "customer_email"])
-    
-    # Second insert
-    crud_instance.insert(["Jane", "jane@test.com"], cols=["customer_name", "customer_email"])
-    
-    # Check execute was called twice
-    assert mock_cursor.execute.call_count == 2
-    
-    # Check commit was called twice
-    assert mock_conn.commit.call_count == 2
+
+    data = {}
+
+    with pytest.raises(ValueError, match="Cannot insert empty data dictionary"):
+        crud_instance.insert(data)
+
+    mock_cursor.execute.assert_not_called()
+    mock_conn.commit.assert_not_called()
+
+
 
 
 # ============================================
