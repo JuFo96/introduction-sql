@@ -1,7 +1,7 @@
 # Inspired by https://stackoverflow.com/questions/38076220/python-mysqldb-connection-in-a-class
 
 from typing import Self
-from config import DatabaseConfig
+from config import DatabaseConnectionConfig
 import config
 from contextlib import contextmanager
 from typing import Optional, List, Tuple, Any
@@ -11,12 +11,12 @@ from mysql.connector.connection import MySQLConnection
 from mysql.connector.cursor import MySQLCursor
 
 
-class Database:  
-    def __init__(self, config: DatabaseConfig) -> None:
-        """Initialize database connection.
+class DatabaseConnection:  
+    def __init__(self, config: DatabaseConnectionConfig) -> None:
+        """Initialize DatabaseConnection connection.
         
         Args:
-            config: DatabaseConfig object with connection parameters.
+            config: DatabaseConnectionConfig object with connection parameters.
             
         Raises:
             mysql.connector.Error: If connection fails.
@@ -26,7 +26,7 @@ class Database:
         self.connect()
 
     
-    def __enter__(self) -> 'Database':
+    def __enter__(self) -> 'DatabaseConnection':
         """Enter context manager.
         
         Returns:
@@ -49,7 +49,7 @@ class Database:
         return False
     
     def connect(self) -> None:
-        """Establish connection to MySQL database.
+        """Establish connection to MySQL DatabaseConnection.
 
         
         Raises:
@@ -70,11 +70,11 @@ class Database:
             RuntimeError: If connection is not established.
         """
         if not self._connection:
-            raise RuntimeError("Database connection is not established")
+            raise RuntimeError("DatabaseConnection connection is not established")
         return self._connection
     
     def is_connected(self) -> bool:
-        """Check if database connection is active.
+        """Check if DatabaseConnection connection is active.
         
         Returns:
             True if connected, False otherwise.
@@ -93,7 +93,7 @@ class Database:
                 to prevent synchronization issues.
                 
         Yields:
-            MySQLCursor: Database cursor for executing queries.
+            MySQLCursor: DatabaseConnection cursor for executing queries.
             
         Raises:
             RuntimeError: If connection is not established.
@@ -104,7 +104,7 @@ class Database:
                 results = cursor.fetchall()
         """
         if not self._connection:
-            raise RuntimeError("Database connection is not established")
+            raise RuntimeError("DatabaseConnection connection is not established")
             
         cursor = self._connection.cursor(buffered=buffered)
         try:

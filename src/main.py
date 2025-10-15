@@ -1,22 +1,33 @@
-from mysql_db import Database
-from dataclasses import asdict
-from pathlib import Path
+from mysql_db import DatabaseConnection
 import pandas as pd
 import config
-from mysql.connector.abstracts import MySQLCursorAbstract
-import mysql.connector
+from config import dbconfig
+from crud import CRUD
 
+def fetch_table(table_name: str, config: config.DatabaseConnectionConfig, cols: tuple | None = None, num_rows: int|None = None) -> list[any]:
+    with DatabaseConnection(config) as connection:
+        with connection.cursor() as cur:
+            # "hack" to select all if no cols are supplied
+            if not cols:
+                cur.execute(f"SELECT * FROM {table_name};")
+            else:
+                column_string = ", ".join(cols)
+                cur.execute(f"SELECT {column_string} FROM {table_name}")
+            if not num_rows:
+                results = cur.fetchall()
+            else:
+                results = cur.fetchmany(num_rows)
+    return results
+
+def print_iterable(iter: iter) -> None:
+    for row in iter:
+        print(row)
 
 
 def main():
-    dbconfig = config.DatabaseConfig("localhost", 3306, "root", "mypassword", "db")
-    with Database(dbconfig) as db:
-        print(f"Database is connected: {db.is_connected()}")
-        cursor = db._connection.cursor()
-        print(db.connection.is_connected())
-        cursor.execute("USE db")
-        cursor.close()
-        
+    with DatabaseConnection(dbconfig) as db:
+        print(f"DatabaseConnection is connected: {db.is_connected()}")
+                
         with open(config.CREATE_DB, 'r') as f:
             sql = f.read()
             
@@ -26,42 +37,34 @@ def main():
                     if stmt:
                         cur.execute(stmt)
                 db.commit()
-                print(f"Database is connected: {db.is_connected()}")
+                print(f"DatabaseConnection is connected: {db.is_connected()}")
                 
-
-
-
-    #cursor.execute()
-    #cursor.execute(f"INSERT INTO Categories (c)")
 
     data = pd.read_csv(config.COMBINED_CSV)
     sql_insert_string = "INSERT INTO orders_combined (id, date_time, customer_name, customer_email, product_name, product_price) VALUES (%s, %s, %s, %s, %s, %s)"
     values = data.values.tolist()
-    with mysql.connector.connect(**asdict(dbconfig)) as db:
+    with DatabaseConnection(dbconfig) as db:
         with db.cursor() as cursor:
-            cursor.execute("USE db")
-            cursor.executemany(sql_insert_string, values)
+            cursor.executemany(sql_insert_string, values[:5])
+
         db.commit()
 
-    with mysql.connector.connect(host="localhost", port=3306, user="root", password="mypassword") as db:
-        with db.cursor() as cur:
-            cur.execute("USE db")
-            cur.execute("SELECT * FROM orders_combined;")
-            results = cur.fetchall()
 
-            print("\nInserted rows:")
-            for row in results:
-                print(row)
-        print(f"Database is connected: {db.is_connected()}")
+    results = fetch_table("orders_combined", dbconfig)
+    #results = fetch_table("orders_combined", dbconfig, cols=("customer_name", "customer_email"), num_rows=5)
+    print_iterable(results)
+
+    print("###################")
+
+    with DatabaseConnection(dbconfig) as db:
+        crud = CRUD("orders_combined", db)
+        #print(values[0])
+        crud.insert([6, 'egan', 'egan@B.com'], cols=["id", "customer_name", "customer_email"])
+    results = fetch_table("orders_combined", dbconfig)
+    print_iterable(results)
 
 
-def read_sql_execute(file: Path, connection):
-    """
-    """
-    with open(file, 'r') as f:
-        sql = f.read()
-        with connection.cursor() as cur:
-            cur.execute(sql)
+
  
 if __name__ == "__main__":
     main()

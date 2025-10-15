@@ -23,9 +23,12 @@ DB_NAME = "dbs"
 
 
 @dataclass
-class DatabaseConfig:
+class DatabaseConnectionConfig:
     host: str
     port: int
     user: str
     password: str
     database: str | None
+
+
+dbconfig = DatabaseConnectionConfig("localhost", 3306, "root", "mypassword", "db")
