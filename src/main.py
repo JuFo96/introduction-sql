@@ -3,23 +3,11 @@ import pandas as pd
 import config
 from config import dbconfig
 from crud import CRUD
+from typing import Iterable
+from decimal import Decimal
 
-def fetch_table(table_name: str, config: config.DatabaseConnectionConfig, cols: tuple | None = None, num_rows: int|None = None) -> list[any]:
-    with DatabaseConnection(config) as connection:
-        with connection.cursor() as cur:
-            # "hack" to select all if no cols are supplied
-            if not cols:
-                cur.execute(f"SELECT * FROM {table_name};")
-            else:
-                column_string = ", ".join(cols)
-                cur.execute(f"SELECT {column_string} FROM {table_name}")
-            if not num_rows:
-                results = cur.fetchall()
-            else:
-                results = cur.fetchmany(num_rows)
-    return results
 
-def print_iterable(iter: iter) -> None:
+def print_iterable(iter: Iterable) -> None:
     for row in iter:
         print(row)
 
@@ -45,23 +33,27 @@ def main():
     values = data.values.tolist()
     with DatabaseConnection(dbconfig) as db:
         with db.cursor() as cursor:
-            cursor.executemany(sql_insert_string, values[:5])
+            cursor.executemany(sql_insert_string, values)
 
         db.commit()
 
-
-    results = fetch_table("orders_combined", dbconfig)
-    #results = fetch_table("orders_combined", dbconfig, cols=("customer_name", "customer_email"), num_rows=5)
-    print_iterable(results)
-
-    print("###################")
-
+    
+    cols = ["id", "date_time", "customer_name", "customer_email", "product_name", "product_price"]
     with DatabaseConnection(dbconfig) as db:
         crud = CRUD("orders_combined", db)
-        #print(values[0])
-        crud.insert(data={"id" : 6, "customer_name" : "egan", "customer_email" : "egan@B.com"})
-    results = fetch_table("orders_combined", dbconfig)
-    print_iterable(results)
+
+
+        results = crud.select(cols, num_rows=5)
+        print_iterable(results)
+
+        print("###################")
+
+        crud.insert(data={"id" : 605, "customer_name" : "egan", "customer_email" : "egan@B.com"})
+        results = crud.select(cols, num_rows=6)
+        #print_iterable(results)
+        crud.update(data={"customer_name" : "nage", "product_name": "skateboard"}, filters={"id":6})
+        results = crud.select(cols, filters = {"customer_name": "Jess Stanton"})
+        print_iterable(results)
 
 
 

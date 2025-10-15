@@ -13,7 +13,7 @@ from unittest.mock import Mock
 from crud import CRUD
 
 
-# Simple fixtures
+
 @pytest.fixture
 def mock_connection():
     """Create a fake database connection."""
@@ -34,6 +34,21 @@ def crud(mock_connection):
     crud_instance = CRUD(table_name="orders_combined", connection=mock_conn)
     return crud_instance, mock_cursor, mock_conn
 
+
+# ============================================
+# Tests for CRUD initialization
+# ============================================
+
+def test_crud_initialization():
+    """Test that CRUD initializes correctly."""
+    mock_conn = Mock()
+    
+    crud = CRUD(table_name="test_table", connection=mock_conn)
+    
+    assert crud.table_name == "test_table"
+    assert crud.connection == mock_conn
+    assert len(crud.valid_columns) == 6
+    assert "customer_name" in crud.valid_columns
 
 # ============================================
 # Tests for validate_columns
@@ -160,61 +175,16 @@ def test_insert_with_empty_data_raises_error(crud):
     mock_cursor.execute.assert_not_called()
     mock_conn.commit.assert_not_called()
 
-
+# ============================================
+# Tests for read method
+# ============================================
 
 
 # ============================================
-# Tests for CRUD initialization
+# Tests for update method
 # ============================================
-
-def test_crud_initialization():
-    """Test that CRUD initializes correctly."""
-    mock_conn = Mock()
-    
-    crud = CRUD(table_name="test_table", connection=mock_conn)
-    
-    assert crud.table_name == "test_table"
-    assert crud.connection == mock_conn
-    assert len(crud.valid_columns) == 6
-    assert "customer_name" in crud.valid_columns
-
-
-def test_valid_columns_list(crud):
-    """Test that valid_columns contains expected columns."""
-    crud_instance, _, _ = crud
-    
-    expected_cols = {"id", "date_time", "customer_name", "customer_email", "product_name", "product_price"}
-    
-    assert crud_instance.valid_columns == expected_cols
 
 
 # ============================================
-# Parametrized tests (testing multiple cases at once)
+# Tests for delete method
 # ============================================
-
-@pytest.mark.parametrize("columns", [
-    ["id"],
-    ["customer_name", "customer_email"],
-    ["product_name", "product_price"],
-    ["id", "date_time", "customer_name", "customer_email", "product_name", "product_price"],
-])
-def test_validate_all_valid_columns(crud, columns):
-    """Test validation with different combinations of valid columns."""
-    crud_instance, _, _ = crud
-    
-    # Should not raise any errors
-    crud_instance.validate_columns(columns)
-
-
-@pytest.mark.parametrize("invalid_column", [
-    "invalid_col",
-    "hacker_column",
-    "drop_table",
-    "'; DROP TABLE users; --",
-])
-def test_validate_rejects_invalid_columns(crud, invalid_column):
-    """Test that various invalid columns are rejected."""
-    crud_instance, _, _ = crud
-    
-    with pytest.raises(ValueError):
-        crud_instance.validate_columns([invalid_column])

@@ -1,19 +1,24 @@
-
-from typing import Any, Iterable
+from typing import Any, Iterable, Optional
 import config
-from mysql_db import DatabaseConnection, DatabaseConnectionConfig
+from mysql_db import DatabaseConnection
 
 
 class CRUD:
     """
     VALID COLS ["id", "date_time", "customer_name", "customer_email", "product_name", "product_price"]
     """
+
     def __init__(self, table_name: str, connection: DatabaseConnection) -> None:
         self.table_name: str = table_name
         self.connection: DatabaseConnection = connection
-        self.dbconfig: DatabaseConnectionConfig = config.dbconfig
-        self.valid_columns = {"id", "date_time", "customer_name", "customer_email", "product_name", "product_price"}
-
+        self.valid_columns: set = {
+            "id",
+            "date_time",
+            "customer_name",
+            "customer_email",
+            "product_name",
+            "product_price",
+        }
 
     def validate_columns(self, cols: Iterable[str]) -> None:
         """Validates supplied columns is in the whitelist columns to prevent sql injection
@@ -22,15 +27,15 @@ class CRUD:
             Args:
                 cols: The user supplied iterable of columns to operate on
 
-            Raises: 
+            Raises:
                 ValueError: If the column is not in the whitelist of column names.
 
         """
         invalid_cols = set(cols) - self.valid_columns
         if invalid_cols:
-            raise ValueError(f"Invalid column: {invalid_cols} is not in valid columns: {self.valid_columns}")
-
-                
+            raise ValueError(
+                f"Invalid column: {invalid_cols} is not in valid columns: {self.valid_columns}"
+            )
 
     def insert(self, data: dict[str, Any]) -> None:
         """Inserts data dictionary into the table
@@ -47,8 +52,8 @@ class CRUD:
 
             cols = data.keys()
             self.validate_columns(cols)
-            values = [data[col] for col in cols] 
-            
+            values = [data[col] for col in cols]
+
             column_string = ", ".join(cols)
             num_cols = len(cols)
             # ", ".join() mimics (%s, %s) based on num_cols
@@ -56,55 +61,77 @@ class CRUD:
             cur.execute(sql_string, values)
         self.connection.commit()
 
-    def insertmany(self, values: dict[list[Any]]) -> None:
+    def insertmany(self, values: dict[str, list[Any]]) -> None:
         pass
 
-    def update(self, values: Any, cols: list[str] | None =None) -> None:
+    def select(self, cols: Iterable[str], filters: Optional[dict[str, Any]] = None, num_rows: int | None = None) -> list[Any]:
+        """_summary_
+
+        Args:
+            cols (Iterable[str]): _description_
+            num_rows (int | None, optional): _description_. Defaults to None.
+            filters: optional dict for WHERE clause only supports "=" operator.
+
+        Returns:
+            list[Any]: _description_
+        """
         with self.connection.cursor() as cur:
-            if cols == None:
-                sql_string = f"""UPDATE {self.table_name}
-                SET ({set_cols}) 
-                WHERE ({where_cols}) 
-                VALUES (%s, %s, %s, %s, %s, %s)"""
-                cur.execute(sql_string, values)
+            self.validate_columns(cols)
+            column_string = ", ".join(cols)
+
+            if not filters:
+                cur.execute(f"SELECT {column_string} FROM {self.table_name}")
             else:
-                self.validate_columns(cols)
+                self.validate_columns(filters.keys())
+                where_list = [f"{col} = %s" for col in filters.keys()]
+                where_string = " AND ".join(where_list)
 
-                column_string = ", ".join(cols)
-                num_cols = len(cols)
-                # ", ".join mimics (%s, %s, %s, %s, %s, %s) based on num_cols
-                sql_string = f"INSERT INTO {self.table_name} ({column_string}) VALUES ({', '.join(['%s'] * num_cols)})"
+                sql_string = f"SELECT {column_string} FROM {self.table_name} WHERE {where_string}"
+                values = list(filters.values())
+
                 cur.execute(sql_string, values)
-        self.connection.commit()
-                
 
-    
-
-    def fetch_table(self, cols: tuple | None = None, num_rows: int|None = None) -> list[any]:
-        with DatabaseConnection(config) as connection:
-            with connection.cursor() as cur:
-                # "hack" to select all if no cols are supplied
-                if not cols:
-                    cur.execute(f"SELECT * FROM {table_name};")
-                if cols:
-                    column_string = ", ".join(cols)
-                    cur.execute(f"SELECT {column_string} FROM {table_name}")
-                if not num_rows:
-                    results = cur.fetchall()
-                else:
-                    results = cur.fetchmany(num_rows)
+            if not num_rows:
+                results = cur.fetchall()
+            else:
+                results = cur.fetchmany(num_rows)
         return results
 
-    def update():
-        pass
-        
-    def delete():
+    def update(self, data: dict[str, Any], filters: dict[str, Any]) -> None:
+        """Updates the table with data dictionary with the filters dictionary supplying where clause
+
+        Args:
+            values: dictionary containing columns and values to update
+            filter: dictionary containing filters. The key is a column with the value being the condition.
+
+        Raises: ValueError if data dictionary is empty
+        """
+
+        with self.connection.cursor() as cur:
+            if not data:
+                raise ValueError("Cannot update: empty data dictionary")
+            self.validate_columns(data)
+            self.validate_columns(filters)
+
+            set_list = [f"{col} = %s" for col in data.keys()]
+            set_string = ", ".join(set_list)
+
+            where_list = [f"{col} = %s" for col in filters.keys()]
+            where_string = " AND ".join(where_list)
+
+            values = list(data.values()) + list(filters.values())
+
+            sql_string = f"""UPDATE {self.table_name} SET {set_string} WHERE {where_string}"""
+            cur.execute(sql_string, values)
+
+        self.connection.commit()
+
+    def delete(self):
         pass
 
-    def remove_table():
-        pass
 
 if __name__ == "__main__":
     crud = CRUD("orders_combined", DatabaseConnection(config.dbconfig))
-    #CRUD.insert([2, 2025, 3, 20, 11, 45, 43, 'Jess Stanton', 'jess.stanton@yahoo.com', 'Mouse', '443.55'])
-    #crud.validate_columns(cols = ["customer_emai", "123"])
+    # crud.update()
+    # CRUD.insert([2, 2025, 3, 20, 11, 45, 43, 'Jess Stanton', 'jess.stanton@yahoo.com', 'Mouse', '443.55'])
+    # crud.validate_columns(cols = ["customer_emai", "123"])

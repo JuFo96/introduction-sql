@@ -1,10 +1,9 @@
 # Inspired by https://stackoverflow.com/questions/38076220/python-mysqldb-connection-in-a-class
 
-from typing import Self
 from config import DatabaseConnectionConfig
 import config
 from contextlib import contextmanager
-from typing import Optional, List, Tuple, Any
+from typing import Optional, List, Tuple, Any, Self
 import mysql.connector
 from mysql.connector.abstracts import MySQLConnectionAbstract
 from mysql.connector.connection import MySQLConnection
