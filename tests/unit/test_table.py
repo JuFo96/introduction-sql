@@ -8,9 +8,11 @@ Run:
     pytest tests/test_crud.py -v
 """
 
-import pytest
 from unittest.mock import Mock
-from crud import CRUD
+
+import pytest
+
+from table import Table
 
 
 @pytest.fixture
@@ -30,7 +32,7 @@ def mock_connection():
 def crud(mock_connection):
     """Create CRUD instance with fake connection."""
     mock_conn, mock_cursor = mock_connection
-    crud_instance = CRUD(table_name="orders_combined", connection=mock_conn)
+    crud_instance = Table(table_name="orders_combined", connection=mock_conn)
     return crud_instance, mock_cursor, mock_conn
 
 
@@ -42,11 +44,11 @@ def test_crud_initialization():
     """Test that CRUD initializes correctly."""
     mock_conn = Mock()
     
-    crud = CRUD(table_name="test_table", connection=mock_conn)
+    crud = Table(table_name="test_table", connection=mock_conn)
     
     assert crud.table_name == "test_table"
     assert crud.connection == mock_conn
-    assert len(crud.valid_columns) == 6
+    assert len(crud.valid_columns) == 12
     assert "customer_name" in crud.valid_columns
 
 # ============================================

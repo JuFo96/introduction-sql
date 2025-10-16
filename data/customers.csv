@@ -1,4 +1,4 @@
-id,name,email
+customer_id,customer_name,email
 0,Elizabeth Wyman,elizabeth.wyman@hotmail.com
 1,Wilhelmine Klocko,wilhelmine.klocko@gmail.com
 2,Romaine Mayer,romaine.mayer@yahoo.com

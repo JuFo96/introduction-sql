@@ -1,9 +1,11 @@
 # Inspired by https://stackoverflow.com/questions/38076220/python-mysqldb-connection-in-a-class
 
-from config import DatabaseConnectionConfig
-from dataclasses import asdict
 from contextlib import contextmanager
+from dataclasses import asdict
+
 import mysql.connector
+
+from config import DatabaseConnectionConfig
 
 
 class DatabaseConnection:

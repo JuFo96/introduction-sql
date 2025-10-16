@@ -1,5 +1,5 @@
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 
 # Directories
 BASE_DIR = Path(__file__).parent.parent.resolve()
@@ -19,7 +19,7 @@ CREATE_RELATIONAL_DB = BASE_DIR / SQL_DIR / "create_relational_db.sql"
 CREATE_ORDERS_COMBINED = BASE_DIR / SQL_DIR / "create_orders_combined.sql"
 
 # DB
-DB_NAME = "dbs"
+DB_NAME = "db"
 
 
 @dataclass

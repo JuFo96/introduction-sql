@@ -1,5 +1,6 @@
-DROP DATABASE relational_db IF EXISTS;
+DROP DATABASE IF EXISTS relational_db;
 CREATE DATABASE relational_db;
+USE relational_db;
 
 DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS products;

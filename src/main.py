@@ -1,66 +1,27 @@
-from mysql_db import DatabaseConnection
 import pandas as pd
+
 import config
+import utils as utils
 from config import dbconfig
-from crud import CRUD
-from typing import Iterable
-
-
-def print_iterable(iter: Iterable) -> None:
-    for row in iter:
-        print(row)
+from connection import DatabaseConnection
+from table import Table
 
 
 def main():
-    with DatabaseConnection(dbconfig) as db:
-        print(f"DatabaseConnection is connected: {db.is_connected()}")
-                
-        with open(config.CREATE_ORDERS_COMBINED, 'r') as f:
-            sql = f.read()
-            
-            with db.cursor() as cur:
-                for statement in sql.split(';'):
-                    stmt = statement.strip()    
-                    if stmt:
-                        cur.execute(stmt)
-                db.commit()
-                print(f"DatabaseConnection is connected: {db.is_connected()}")
-                
+    with DatabaseConnection(dbconfig) as connection:
+        utils.run_sql_schema(config.CREATE_RELATIONAL_DB, connection)
+        orders = Table("orders", connection)
+        products = Table("products", connection)
+        customers = Table("customers", connection)
 
-    data = pd.read_csv(config.COMBINED_CSV)
-    sql_insert_string = "INSERT INTO orders_combined (id, date_time, customer_name, customer_email, product_name, product_price) VALUES (%s, %s, %s, %s, %s, %s)"
-    values = data.values.tolist()
-    with DatabaseConnection(dbconfig) as db:
-        with db.cursor() as cursor:
-            cursor.executemany(sql_insert_string, values)
+        orders_data = pd.read_csv(config.ORDERS_CSV)
+        products_data = pd.read_csv(config.PRODUCTS_CSV)
+        customers_data = pd.read_csv(config.CUSTOMERS_CSV)
 
-        db.commit()
-
-    
-    cols = ["id", "date_time", "customer_name", "customer_email", "product_name", "product_price"]
-    with DatabaseConnection(dbconfig) as db:
-        crud = CRUD("orders_combined", db)
+        products.insertmany(products_data.to_dict("records"))
+        customers.insertmany(customers_data.to_dict("records"))
+        orders.insertmany(orders_data.to_dict("records"))
 
 
-        results = crud.select(cols, limit=5)
-        print_iterable(results)
-
-        print("###################")
-
-        crud.insert(data={"id" : 605, "customer_name" : "egan", "customer_email" : "egan@B.com"})
-        results = crud.select(cols, limit=6)
-        #print_iterable(results)
-        crud.update(data={"customer_name" : "nage", "product_name": "skateboard"}, filters={"id":6})
-        results = crud.select(cols, filters = {"customer_name": "Jess Stanton"})
-        print_iterable(results)
-        print("Delete Operation")
-        crud.delete(filters={"product_name": "USB Drive"})
-        results = crud.select(cols, filters = {"customer_name": "Jess Stanton"})
-        print_iterable(results)
-
-
-
-
- 
 if __name__ == "__main__":
     main()

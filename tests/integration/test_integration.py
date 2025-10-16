@@ -1,7 +1,11 @@
-import pytest
-from crud import CRUD, DatabaseConnection
-from config import DatabaseConnectionConfig
 import os
+
+import pytest
+
+from config import DatabaseConnectionConfig
+from connection import DatabaseConnection
+from table import Table
+
 
 @pytest.fixture
 def db_connection():
@@ -20,7 +24,7 @@ def db_connection():
 @pytest.fixture
 def crud(db_connection):
     """Fixture to provide CRUD instance."""
-    return CRUD(connection=db_connection, table_name="test_orders")
+    return Table(connection=db_connection, table_name="test_orders")
 
 
 @pytest.fixture(autouse=True)

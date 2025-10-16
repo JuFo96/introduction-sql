@@ -9,3 +9,8 @@ dependencies = [
     "pandas>=2.3.3",
     "pytest>=8.4.2",
 ]
+
+[dependency-groups]
+dev = [
+    "isort>=7.0.0",
+]

@@ -1,11 +1,13 @@
-import config
-import pandas as pd
-from mysql_db import DatabaseConnection
 from pathlib import Path
-from typing import Sequence
+from typing import Iterable, Sequence
+
+import pandas as pd
+
+import config
+from connection import DatabaseConnection
 
 
-def read_sql_execute(file: Path, connection: DatabaseConnection) -> None:
+def run_sql_schema(file: Path, connection: DatabaseConnection) -> None:
     with open(file, "r") as f:
         sql = f.read()
     with connection.cursor() as cur:
@@ -14,6 +16,11 @@ def read_sql_execute(file: Path, connection: DatabaseConnection) -> None:
             if statement:
                 cur.execute(statement)
         connection.commit()
+
+
+def print_iterable(iter: Iterable) -> None:
+    for row in iter:
+        print(row)
 
 
 def insert_to_db(values: Sequence, connection: DatabaseConnection) -> None:
@@ -33,7 +40,7 @@ def main():
     values = data.values.tolist()
 
     with DatabaseConnection(config.dbconfig) as connection:
-        read_sql_execute(config.CREATE_ORDERS_COMBINED, connection)
+        run_sql_schema(config.CREATE_ORDERS_COMBINED, connection)
         insert_to_db(values, connection)
         drop_table(connection)
 
