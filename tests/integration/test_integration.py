@@ -1,16 +1,17 @@
 import pytest
 from crud import CRUD, DatabaseConnection
 from config import DatabaseConnectionConfig
+import os
 
 @pytest.fixture
 def db_connection():
     """Fixture to provide database connection for tests."""
     config = DatabaseConnectionConfig(
-        host="127.0.0.1",
-        port=3306,
-        user="root",
-        password="mypassword",
-        database="test_db"
+        host=os.getenv("MYSQL_HOST", "127.0.0.1"),
+        port=int(os.getenv("MYSQL_PORT", "3306")),
+        user=os.getenv("MYSQL_USER", "root"),
+        password=os.getenv("MYSQL_PASSWORD", "mypassword"),
+        database=os.getenv("MYSQL_DATABASE", "test_db"),
     )
     with DatabaseConnection(config) as conn:
         yield conn

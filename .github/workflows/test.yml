@@ -5,32 +5,33 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: mypassword
+          MYSQL_DATABASE: testdb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -pmypassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
       - uses: actions/checkout@v4
-      
       - name: Set up uv
         uses: astral-sh/setup-uv@v4
-      
-      - name: Set up unit tests
+
+      - name: Run unit tests
         run: uv run pytest tests/unit/
-      
-      # Start MySQL using your docker-compose file
-      - name: Start MySQL
-        run: docker compose up -d
-      
-      # Wait for MySQL to be ready
-      - name: Wait for MySQL
-        run: |
-          for i in {1..30}; do
-            if docker exec dev_mysql mysqladmin ping -h localhost -u root -pmypassword --silent; then
-              echo "MySQL is ready!"
-              break
-            fi
-            echo "Waiting for MySQL... ($i/30)"
-            sleep 2
-          done
-      
-      # Run tests (they handle DB setup themselves)
-      - name: Run tests
-        run: uv run pytest -v
+
+      - name: Run integration tests
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_USER: root
+          MYSQL_PASSWORD: mypassword
+          MYSQL_DATABASE: testdb
+        run: uv run pytest tests/integration/
