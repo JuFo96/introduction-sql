@@ -15,7 +15,7 @@ def main():
     with DatabaseConnection(dbconfig) as db:
         print(f"DatabaseConnection is connected: {db.is_connected()}")
                 
-        with open(config.CREATE_DB, 'r') as f:
+        with open(config.CREATE_ORDERS_COMBINED, 'r') as f:
             sql = f.read()
             
             with db.cursor() as cur:

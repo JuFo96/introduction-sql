@@ -13,7 +13,6 @@ from unittest.mock import Mock
 from crud import CRUD
 
 
-
 @pytest.fixture
 def mock_connection():
     """Create a fake database connection."""
