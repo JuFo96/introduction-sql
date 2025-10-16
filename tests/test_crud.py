@@ -179,6 +179,61 @@ def test_insert_with_empty_data_raises_error(crud):
 # Tests for read method
 # ============================================
 
+def test_select_returns_num_rows(crud):
+    """Tests that select respects the num_rows parameter to return"""
+
+    crud_instance, mock_cursor, mock_conn = crud
+    mock_cursor.fetchall.return_value = [(1,), (2,), (3,), (4,)]
+
+    data = ["id"]
+    results = crud_instance.select(data, limit=4)
+
+    mock_cursor.fetchall.assert_called_once_with()
+    assert len(results) == 4
+
+def test_select_returns_empty_result(crud):
+    """Tests that selects returns empty result"""
+
+    crud_instance, mock_cursor, mock_conn = crud
+    mock_cursor.fetchall.return_value = []
+
+    data = ["id"]
+    results = crud_instance.select(data)
+
+    mock_cursor.fetchall.assert_called_once_with()
+    assert len(results) == 0
+
+def test_select_returns_all_result(crud):
+    """Tests that selects returns empty result"""
+
+    crud_instance, mock_cursor, mock_conn = crud
+    mock_cursor.fetchall.return_value = [(1, "name"), (2, "name"), (3, "name"), (4, "name")]
+
+    data = ["id", "customer_name"]
+    results = crud_instance.select(data)
+
+    mock_cursor.fetchall.assert_called_once_with()
+    assert len(results) == 4
+
+def test_select_with_all_options(crud):
+    """Full featured case - tests everything together."""
+    crud_instance, mock_cursor, _ = crud
+    mock_cursor.fetchall.return_value = []
+    
+    crud_instance.select(
+        ["id", "customer_name"],
+        filters={"customer_name": "name"},
+        limit=2
+    )
+    
+    sql_string = mock_cursor.execute.call_args[0][0]
+    params = mock_cursor.execute.call_args[0][1]
+    
+    assert sql_string == "SELECT id, customer_name FROM orders_combined WHERE customer_name = %s LIMIT %s"
+    assert params == ["name", 2]
+    
+    
+
 
 # ============================================
 # Tests for update method

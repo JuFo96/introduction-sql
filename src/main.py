@@ -43,17 +43,22 @@ def main():
         crud = CRUD("orders_combined", db)
 
 
-        results = crud.select(cols, num_rows=5)
+        results = crud.select(cols, limit=5)
         print_iterable(results)
 
         print("###################")
 
         crud.insert(data={"id" : 605, "customer_name" : "egan", "customer_email" : "egan@B.com"})
-        results = crud.select(cols, num_rows=6)
+        results = crud.select(cols, limit=6)
         #print_iterable(results)
         crud.update(data={"customer_name" : "nage", "product_name": "skateboard"}, filters={"id":6})
         results = crud.select(cols, filters = {"customer_name": "Jess Stanton"})
         print_iterable(results)
+        print("Delete Operation")
+        crud.delete(filters={"product_name": "USB Drive"})
+        results = crud.select(cols, filters = {"customer_name": "Jess Stanton"})
+        print_iterable(results)
+
 
 
 

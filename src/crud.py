@@ -55,46 +55,56 @@ class CRUD:
             values = [data[col] for col in cols]
 
             column_string = ", ".join(cols)
-            num_cols = len(cols)
+            _num_cols = len(cols)
             # ", ".join() mimics (%s, %s) based on num_cols
-            sql_string = f"INSERT INTO {self.table_name} ({column_string}) VALUES ({', '.join(['%s'] * num_cols)})"
+            sql_string = f"INSERT INTO {self.table_name} ({column_string}) VALUES ({', '.join(['%s'] * _num_cols)})"
             cur.execute(sql_string, values)
         self.connection.commit()
 
     def insertmany(self, values: dict[str, list[Any]]) -> None:
         pass
 
-    def select(self, cols: Iterable[str], filters: Optional[dict[str, Any]] = None, num_rows: int | None = None) -> list[Any]:
+    def select(self, cols: Iterable[str], filters: Optional[dict[str, Any]] = None, limit: int | None = None) -> list[Any]:
         """_summary_
 
         Args:
             cols (Iterable[str]): _description_
-            num_rows (int | None, optional): _description_. Defaults to None.
-            filters: optional dict for WHERE clause only supports "=" operator.
+            filters: optional dict for WHERE clause only supports "=" operator..
+            limit (int | None, optional): _description_. Defaults to None.
+
+        Raises:
+            TypeError: _description_
+            ValueError: _description_
 
         Returns:
             list[Any]: _description_
         """
+        if limit is not None:
+            if not isinstance(limit, int):
+                raise TypeError("Limit must be an integer")
+            if limit < 1:
+                raise ValueError("Limit must be positive")
+            
         with self.connection.cursor() as cur:
             self.validate_columns(cols)
             column_string = ", ".join(cols)
 
-            if not filters:
-                cur.execute(f"SELECT {column_string} FROM {self.table_name}")
-            else:
+            sql_string = f"SELECT {column_string} FROM {self.table_name}"
+            values = []
+
+            if filters:
                 self.validate_columns(filters.keys())
                 where_list = [f"{col} = %s" for col in filters.keys()]
                 where_string = " AND ".join(where_list)
+                sql_string += f" WHERE {where_string}"
+                values.extend(filters.values())
+            
+            if limit is not None:
+                sql_string += " LIMIT %s"
+                values.append(limit)
 
-                sql_string = f"SELECT {column_string} FROM {self.table_name} WHERE {where_string}"
-                values = list(filters.values())
-
-                cur.execute(sql_string, values)
-
-            if not num_rows:
-                results = cur.fetchall()
-            else:
-                results = cur.fetchmany(num_rows)
+            cur.execute(sql_string, values)
+            results = cur.fetchall()
         return results
 
     def update(self, data: dict[str, Any], filters: dict[str, Any]) -> None:
@@ -126,7 +136,29 @@ class CRUD:
 
         self.connection.commit()
 
-    def delete(self):
+    def delete(self, filters: dict[str, Any]) -> None:
+        """Deletes values from columns with the condition from filters
+
+        Args:
+            filters (dict[str, Any]): _description_
+
+        Raises:
+            ValueError: If supplied filters dict is empty
+        """
+        with self.connection.cursor() as cur:
+            self.validate_columns(filters.keys())
+
+            if not filters:
+                raise ValueError("No condition in filters dict, cannot delete")
+            else:
+                where_list = [f"{col} = %s" for col in filters.keys()]
+                where_string = " AND ".join(where_list)
+
+                sql_string = f"DELETE FROM {self.table_name} WHERE {where_string}"
+                values = list(filters.values())
+
+                cur.execute(sql_string, values)
+
         pass
 
 
