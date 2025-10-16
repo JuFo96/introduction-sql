@@ -1,5 +1,5 @@
 from pathlib import Path
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
 # Directories
 BASE_DIR = Path(__file__).parent.parent.resolve()

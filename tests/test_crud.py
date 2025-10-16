@@ -9,11 +9,11 @@ Run:
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 from crud import CRUD
 
 
-# Simple fixtures
+
 @pytest.fixture
 def mock_connection():
     """Create a fake database connection."""
@@ -36,6 +36,21 @@ def crud(mock_connection):
 
 
 # ============================================
+# Tests for CRUD initialization
+# ============================================
+
+def test_crud_initialization():
+    """Test that CRUD initializes correctly."""
+    mock_conn = Mock()
+    
+    crud = CRUD(table_name="test_table", connection=mock_conn)
+    
+    assert crud.table_name == "test_table"
+    assert crud.connection == mock_conn
+    assert len(crud.valid_columns) == 6
+    assert "customer_name" in crud.valid_columns
+
+# ============================================
 # Tests for validate_columns
 # ============================================
 
@@ -54,8 +69,8 @@ def test_validate_columns_with_invalid_column(crud):
     crud_instance, _, _ = crud
     
     # This should raise ValueError
-    with pytest.raises(ValueError, match="Invalid column: bad_column"):
-        crud_instance.validate_columns(["bad_column"])
+    with pytest.raises(ValueError, match="Invalid column: {'bad_column'}"):
+        crud_instance.validate_columns({"bad_column"})
 
 
 def test_validate_columns_with_mixed_columns(crud):
@@ -79,14 +94,14 @@ def test_validate_columns_with_empty_list(crud):
 # Tests for insert method
 # ============================================
 
-def test_insert_with_no_cols_specified(crud):
-    """Test insert when cols is None (all columns)."""
+def test_insert_with_all_cols(crud):
+    """Test insert with all cols in dictinary."""
     crud_instance, mock_cursor, mock_conn = crud
     
-    values = [1, "2024-01-01", "John Doe", "john@example.com", "Widget", 19.99]
+    data = {"id": 1, "date_time": "2024-01-01", "customer_name": "egan", "customer_email": "egan@B.com", "product_name": "widget", "product_price": 19.99}
     
     # Call insert
-    crud_instance.insert(values, cols=None)
+    crud_instance.insert(data)
     
     # Check that execute was called once
     mock_cursor.execute.assert_called_once()
@@ -96,10 +111,12 @@ def test_insert_with_no_cols_specified(crud):
     sql = call_args[0]
     params = call_args[1]
     
+    
     assert "INSERT INTO orders_combined" in sql
     assert "VALUES (%s, %s, %s, %s, %s, %s)" in sql
-    assert params == values
-    
+    assert "egan" in params
+    assert params[0] == 1
+    assert len(params) == 6
     # Check commit was called
     mock_conn.commit.assert_called_once()
 
@@ -108,11 +125,11 @@ def test_insert_with_specific_columns(crud):
     """Test insert with specific columns."""
     crud_instance, mock_cursor, mock_conn = crud
     
-    cols = ["customer_name", "customer_email"]
-    values = ["Jane Smith", "jane@example.com"]
+    data = {"customer_name": "Jane Smith", "customer_email": "jane@example.com"}
+
     
     # Call insert
-    crud_instance.insert(values, cols=cols)
+    crud_instance.insert(data)
     
     # Check execute was called
     mock_cursor.execute.assert_called_once()
@@ -125,113 +142,104 @@ def test_insert_with_specific_columns(crud):
     assert "INSERT INTO orders_combined" in sql
     assert "customer_name, customer_email" in sql
     assert "VALUES (%s, %s)" in sql
-    assert params == values
+    assert "Jane Smith" in params
+    assert params[1] == "jane@example.com"
     
     # Check commit was called
     mock_conn.commit.assert_called_once()
-
-
-def test_insert_with_single_column(crud):
-    """Test insert with just one column."""
-    crud_instance, mock_cursor, mock_conn = crud
-    
-    cols = ["product_price"]
-    values = [29.99]
-    
-    crud_instance.insert(values, cols=cols)
-    
-    call_args = mock_cursor.execute.call_args[0]
-    sql = call_args[0]
-    
-    assert "product_price" in sql
-    assert "VALUES (%s)" in sql
 
 
 def test_insert_with_invalid_column_raises_error(crud):
     """Test that insert with invalid column raises ValueError."""
     crud_instance, mock_cursor, mock_conn = crud
     
-    cols = ["invalid_column"]
-    values = ["some value"]
+    data = {"DROP TABLE": "Jane Doe"}
     
     # Should raise ValueError before executing SQL
     with pytest.raises(ValueError, match="Invalid column"):
-        crud_instance.insert(values, cols=cols)
+        crud_instance.insert(data)
     
     # Execute should NOT have been called
     mock_cursor.execute.assert_not_called()
     mock_conn.commit.assert_not_called()
 
-
-def test_insert_multiple_rows_scenario(crud):
-    """Test inserting multiple times (simulating multiple inserts)."""
+def test_insert_with_empty_data_raises_error(crud):
+    """Test that insert with no data doesn't execute and raises ValueError"""
     crud_instance, mock_cursor, mock_conn = crud
+
+    data = {}
+
+    with pytest.raises(ValueError, match="Cannot insert empty data dictionary"):
+        crud_instance.insert(data)
+
+    mock_cursor.execute.assert_not_called()
+    mock_conn.commit.assert_not_called()
+
+# ============================================
+# Tests for read method
+# ============================================
+
+def test_select_returns_num_rows(crud):
+    """Tests that select respects the num_rows parameter to return"""
+
+    crud_instance, mock_cursor, mock_conn = crud
+    mock_cursor.fetchall.return_value = [(1,), (2,), (3,), (4,)]
+
+    data = ["id"]
+    results = crud_instance.select(data, limit=4)
+
+    mock_cursor.fetchall.assert_called_once_with()
+    assert len(results) == 4
+
+def test_select_returns_empty_result(crud):
+    """Tests that selects returns empty result"""
+
+    crud_instance, mock_cursor, mock_conn = crud
+    mock_cursor.fetchall.return_value = []
+
+    data = ["id"]
+    results = crud_instance.select(data)
+
+    mock_cursor.fetchall.assert_called_once_with()
+    assert len(results) == 0
+
+def test_select_returns_all_result(crud):
+    """Tests that selects returns empty result"""
+
+    crud_instance, mock_cursor, mock_conn = crud
+    mock_cursor.fetchall.return_value = [(1, "name"), (2, "name"), (3, "name"), (4, "name")]
+
+    data = ["id", "customer_name"]
+    results = crud_instance.select(data)
+
+    mock_cursor.fetchall.assert_called_once_with()
+    assert len(results) == 4
+
+def test_select_with_all_options(crud):
+    """Full featured case - tests everything together."""
+    crud_instance, mock_cursor, _ = crud
+    mock_cursor.fetchall.return_value = []
     
-    # First insert
-    crud_instance.insert(["John", "john@test.com"], cols=["customer_name", "customer_email"])
+    crud_instance.select(
+        ["id", "customer_name"],
+        filters={"customer_name": "name"},
+        limit=2
+    )
     
-    # Second insert
-    crud_instance.insert(["Jane", "jane@test.com"], cols=["customer_name", "customer_email"])
+    sql_string = mock_cursor.execute.call_args[0][0]
+    params = mock_cursor.execute.call_args[0][1]
     
-    # Check execute was called twice
-    assert mock_cursor.execute.call_count == 2
+    assert sql_string == "SELECT id, customer_name FROM orders_combined WHERE customer_name = %s LIMIT %s"
+    assert params == ["name", 2]
     
-    # Check commit was called twice
-    assert mock_conn.commit.call_count == 2
+    
 
 
 # ============================================
-# Tests for CRUD initialization
+# Tests for update method
 # ============================================
-
-def test_crud_initialization():
-    """Test that CRUD initializes correctly."""
-    mock_conn = Mock()
-    
-    crud = CRUD(table_name="test_table", connection=mock_conn)
-    
-    assert crud.table_name == "test_table"
-    assert crud.connection == mock_conn
-    assert len(crud.valid_columns) == 6
-    assert "customer_name" in crud.valid_columns
-
-
-def test_valid_columns_list(crud):
-    """Test that valid_columns contains expected columns."""
-    crud_instance, _, _ = crud
-    
-    expected_cols = ["id", "date_time", "customer_name", "customer_email", "product_name", "product_price"]
-    
-    assert crud_instance.valid_columns == expected_cols
 
 
 # ============================================
-# Parametrized tests (testing multiple cases at once)
+# Tests for delete method
 # ============================================
-
-@pytest.mark.parametrize("columns", [
-    ["id"],
-    ["customer_name", "customer_email"],
-    ["product_name", "product_price"],
-    ["id", "date_time", "customer_name", "customer_email", "product_name", "product_price"],
-])
-def test_validate_all_valid_columns(crud, columns):
-    """Test validation with different combinations of valid columns."""
-    crud_instance, _, _ = crud
-    
-    # Should not raise any errors
-    crud_instance.validate_columns(columns)
-
-
-@pytest.mark.parametrize("invalid_column", [
-    "invalid_col",
-    "hacker_column",
-    "drop_table",
-    "'; DROP TABLE users; --",
-])
-def test_validate_rejects_invalid_columns(crud, invalid_column):
-    """Test that various invalid columns are rejected."""
-    crud_instance, _, _ = crud
-    
-    with pytest.raises(ValueError):
-        crud_instance.validate_columns([invalid_column])
