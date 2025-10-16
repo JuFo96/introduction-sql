@@ -2,12 +2,11 @@ import pytest
 from crud import CRUD, DatabaseConnection
 from config import DatabaseConnectionConfig
 
-
 @pytest.fixture
 def db_connection():
     """Fixture to provide database connection for tests."""
     config = DatabaseConnectionConfig(
-        host="localhost",
+        host="127.0.0.1",
         port=3306,
         user="root",
         password="mypassword",

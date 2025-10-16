@@ -7,10 +7,30 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up uv
-      uses: astral-sh/setup-uv@v4
-    
-    - name: Run tests
-      run: uv run pytest
+      - uses: actions/checkout@v4
+      
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+      
+      - name: Set up unit tests
+        uses: uv run pytest tests/unit
+      
+      # Start MySQL using your docker-compose file
+      - name: Start MySQL
+        run: docker-compose up -d
+      
+      # Wait for MySQL to be ready
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if docker exec dev_mysql mysqladmin ping -h localhost -u root -pmypassword --silent; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
+      
+      # Run tests (they handle DB setup themselves)
+      - name: Run tests
+        run: uv run pytest -v
