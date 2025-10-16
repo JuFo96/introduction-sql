@@ -64,7 +64,12 @@ class CRUD:
     def insertmany(self, values: dict[str, list[Any]]) -> None:
         pass
 
-    def select(self, cols: Iterable[str], filters: Optional[dict[str, Any]] = None, limit: int | None = None) -> list[Any]:
+    def select(
+        self,
+        cols: Iterable[str],
+        filters: Optional[dict[str, Any]] = None,
+        limit: int | None = None,
+    ) -> list[Any]:
         """_summary_
 
         Args:
@@ -84,7 +89,7 @@ class CRUD:
                 raise TypeError("Limit must be an integer")
             if limit < 1:
                 raise ValueError("Limit must be positive")
-            
+
         with self.connection.cursor() as cur:
             self.validate_columns(cols)
             column_string = ", ".join(cols)
@@ -98,7 +103,7 @@ class CRUD:
                 where_string = " AND ".join(where_list)
                 sql_string += f" WHERE {where_string}"
                 values.extend(filters.values())
-            
+
             if limit is not None:
                 sql_string += " LIMIT %s"
                 values.append(limit)
@@ -131,7 +136,9 @@ class CRUD:
 
             values = list(data.values()) + list(filters.values())
 
-            sql_string = f"""UPDATE {self.table_name} SET {set_string} WHERE {where_string}"""
+            sql_string = (
+                f"""UPDATE {self.table_name} SET {set_string} WHERE {where_string}"""
+            )
             cur.execute(sql_string, values)
 
         self.connection.commit()
@@ -158,9 +165,6 @@ class CRUD:
                 values = list(filters.values())
 
                 cur.execute(sql_string, values)
-
-        pass
-
 
 if __name__ == "__main__":
     crud = CRUD("orders_combined", DatabaseConnection(config.dbconfig))

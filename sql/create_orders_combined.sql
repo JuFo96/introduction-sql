@@ -1,5 +1,7 @@
+DROP TABLE IF EXISTS orders_combined;
+
 CREATE TABLE `orders_combined` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `id` INTEGER NOT NULL,
     `date_time` DATETIME,
     `customer_name` VARCHAR(40),
     `customer_email` VARCHAR(40),

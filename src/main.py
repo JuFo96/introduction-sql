@@ -4,7 +4,6 @@ import config
 from config import dbconfig
 from crud import CRUD
 from typing import Iterable
-from decimal import Decimal
 
 
 def print_iterable(iter: Iterable) -> None:
