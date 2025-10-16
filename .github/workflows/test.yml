@@ -13,7 +13,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
       
       - name: Set up unit tests
-        uses: uv run pytest 
+        run: uv run pytest 
       
       # Start MySQL using your docker-compose file
       - name: Start MySQL
