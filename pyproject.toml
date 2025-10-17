@@ -5,8 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "graphviz>=0.21",
     "mysql-connector-python>=9.4.0",
     "pandas>=2.3.3",
+    "pylint>=4.0.1",
     "pytest>=8.4.2",
 ]
 
