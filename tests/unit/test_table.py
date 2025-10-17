@@ -48,7 +48,7 @@ def test_crud_initialization():
     
     assert crud.table_name == "test_table"
     assert crud.connection == mock_conn
-    assert len(crud.valid_columns) == 12
+    assert len(crud.valid_columns) == 13
     assert "customer_name" in crud.valid_columns
 
 # ============================================
@@ -223,15 +223,15 @@ def test_select_with_all_options(crud):
     
     crud_instance.select(
         ["id", "customer_name"],
-        filters={"customer_name": "name"},
+        filters={"customer_name": "name", "customer_email": "fake@mail.com"},
         limit=2
     )
     
     sql_string = mock_cursor.execute.call_args[0][0]
     params = mock_cursor.execute.call_args[0][1]
     
-    assert sql_string == "SELECT id, customer_name FROM orders_combined WHERE customer_name = %s LIMIT %s"
-    assert params == ["name", 2]
+    assert sql_string == "SELECT id, customer_name FROM orders_combined WHERE customer_name = %s AND customer_email = %s LIMIT %s"
+    assert params == ["name", "fake@mail.com", 2]
     
     
 

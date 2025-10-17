@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, Any, Hashable
 
 import pandas as pd
 
@@ -22,17 +22,21 @@ def print_iterable(iter: Iterable) -> None:
     for row in iter:
         print(row)
 
+def load_csv_to_dict(file: Path) -> list[dict[Hashable, Any]]:
+    data = pd.read_csv(file).to_dict("records") 
+    return data
 
-def insert_to_db(values: Sequence, connection: DatabaseConnection) -> None:
+
+def insert_to_orders_combined(values: Sequence, connection: DatabaseConnection) -> None:
     sql_insert_string = "INSERT INTO orders_combined (id, date_time, customer_name, customer_email, product_name, product_price) VALUES (%s, %s, %s, %s, %s, %s)"
     with connection.cursor() as cursor:
         cursor.executemany(sql_insert_string, values)
     connection.commit()
 
 
-def drop_table(connection: DatabaseConnection) -> None:
+def drop_table(table: str, connection: DatabaseConnection) -> None:
     with connection.cursor() as cursor:
-        cursor.execute("DROP TABLE orders_combined;")
+        cursor.execute(f"DROP TABLE {table};")
 
 
 def main():
@@ -41,8 +45,8 @@ def main():
 
     with DatabaseConnection(config.dbconfig) as connection:
         run_sql_schema(config.CREATE_ORDERS_COMBINED, connection)
-        insert_to_db(values, connection)
-        drop_table(connection)
+        insert_to_orders_combined(values, connection)
+
 
 
 if __name__ == "__main__":

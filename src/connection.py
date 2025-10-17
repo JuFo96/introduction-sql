@@ -26,7 +26,7 @@ class DatabaseConnection:
         """Enter context manager.
 
         Returns:
-            Self for use in with statement.
+            Self for use with statement.
         """
         return self
 

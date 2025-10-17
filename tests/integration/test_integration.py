@@ -15,7 +15,7 @@ def db_connection():
         port=int(os.getenv("MYSQL_PORT", "3306")),
         user=os.getenv("MYSQL_USER", "root"),
         password=os.getenv("MYSQL_PASSWORD", "mypassword"),
-        database=os.getenv("MYSQL_DATABASE", "test_db"),
+        database=os.getenv("MYSQL_DATABASE", "testdb"),
     )
     with DatabaseConnection(config) as conn:
         yield conn

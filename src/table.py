@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Optional, Sequence
+from typing import Any, Iterable, Optional, Hashable
 
 from connection import DatabaseConnection
 
@@ -24,6 +24,7 @@ class Table:
             "product_price",
             "price",
             "email",
+            "*"
         }
 
     def validate_columns(self, cols: Iterable[str]) -> None:
@@ -40,8 +41,7 @@ class Table:
         invalid_cols = set(cols) - self.valid_columns
         if invalid_cols:
             raise ValueError(
-                f"Invalid column: {invalid_cols} is not in valid columns: {self.valid_columns}"
-            )
+                f"Invalid column: {invalid_cols} is not in valid columns: {self.valid_columns}")
 
     def insert(self, data: dict[str, Any]) -> None:
         """Inserts data dictionary into the table
@@ -67,12 +67,13 @@ class Table:
             cur.execute(sql_string, values)
         self.connection.commit()
 
-    def insertmany(self, data: Sequence) -> None:
+    def insertmany(self, data: list[dict[Hashable, Any]]) -> None:
         with self.connection.cursor() as cur:
             if not data:
                 raise ValueError("Cannot insert empty data dictionary")
 
-            cols = data[0].keys()
+            # Ensure cols is a list of strings
+            cols = [str(col) for col in data[0].keys()]
             self.validate_columns(cols)
             values = []
             for row in data:
@@ -115,10 +116,10 @@ class Table:
         with self.connection.cursor() as cur:
             self.validate_columns(cols)
             column_string = ", ".join(cols)
-
-            sql_string = f"SELECT {column_string} FROM {self.table_name}"
+            
             values = []
-
+            sql_string = f"SELECT {column_string} FROM {self.table_name}"
+            
             if filters:
                 self.validate_columns(filters.keys())
                 where_list = [f"{col} = %s" for col in filters.keys()]

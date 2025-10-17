@@ -20,9 +20,10 @@ CREATE_ORDERS_COMBINED = BASE_DIR / SQL_DIR / "create_orders_combined.sql"
 
 # DB
 DB_NAME = "db"
+DB_TEST_NAME = "test_db"
 
 
-@dataclass
+@dataclass (frozen=True)
 class DatabaseConnectionConfig:
     host: str
     port: int
@@ -31,4 +32,4 @@ class DatabaseConnectionConfig:
     database: str | None
 
 
-dbconfig = DatabaseConnectionConfig("localhost", 3306, "root", "mypassword", "db")
+dbconfig = DatabaseConnectionConfig("localhost", 3306, "root", "mypassword", DB_NAME)
