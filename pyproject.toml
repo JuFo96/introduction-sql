@@ -7,5 +7,9 @@ requires-python = ">=3.13"
 dependencies = [
     "mysql-connector-python>=9.4.0",
     "pandas>=2.3.3",
+    "pylint>=4.0.1",
     "pytest>=8.4.2",
 ]
+
+[dependency-groups]
+dev = []

@@ -1,4 +1,4 @@
-id,name,price
+product_id,product_name,price
 0,Laptop,628.16797
 1,Smartphone,743.2342
 2,Tablet,490.0346

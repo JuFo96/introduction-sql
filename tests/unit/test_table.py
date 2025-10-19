@@ -8,9 +8,11 @@ Run:
     pytest tests/test_crud.py -v
 """
 
-import pytest
 from unittest.mock import Mock
-from crud import CRUD
+
+import pytest
+
+from table import Table
 
 
 @pytest.fixture
@@ -30,7 +32,7 @@ def mock_connection():
 def crud(mock_connection):
     """Create CRUD instance with fake connection."""
     mock_conn, mock_cursor = mock_connection
-    crud_instance = CRUD(table_name="orders_combined", connection=mock_conn)
+    crud_instance = Table(table_name="orders_combined", connection=mock_conn)
     return crud_instance, mock_cursor, mock_conn
 
 
@@ -42,11 +44,11 @@ def test_crud_initialization():
     """Test that CRUD initializes correctly."""
     mock_conn = Mock()
     
-    crud = CRUD(table_name="test_table", connection=mock_conn)
+    crud = Table(table_name="test_table", connection=mock_conn)
     
     assert crud.table_name == "test_table"
     assert crud.connection == mock_conn
-    assert len(crud.valid_columns) == 6
+    assert len(crud.valid_columns) == 13
     assert "customer_name" in crud.valid_columns
 
 # ============================================
@@ -221,15 +223,15 @@ def test_select_with_all_options(crud):
     
     crud_instance.select(
         ["id", "customer_name"],
-        filters={"customer_name": "name"},
+        filters={"customer_name": "name", "customer_email": "fake@mail.com"},
         limit=2
     )
     
     sql_string = mock_cursor.execute.call_args[0][0]
     params = mock_cursor.execute.call_args[0][1]
     
-    assert sql_string == "SELECT id, customer_name FROM orders_combined WHERE customer_name = %s LIMIT %s"
-    assert params == ["name", 2]
+    assert sql_string == "SELECT id, customer_name FROM orders_combined WHERE customer_name = %s AND customer_email = %s LIMIT %s"
+    assert params == ["name", "fake@mail.com", 2]
     
     
 

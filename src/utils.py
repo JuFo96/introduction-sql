@@ -1,11 +1,13 @@
-import config
-import pandas as pd
-from mysql_db import DatabaseConnection
 from pathlib import Path
-from typing import Sequence
+from typing import Iterable, Sequence, Any, Hashable
+
+import pandas as pd
+
+import config
+from connection import DatabaseConnection
 
 
-def read_sql_execute(file: Path, connection: DatabaseConnection) -> None:
+def run_sql_schema(file: Path, connection: DatabaseConnection) -> None:
     with open(file, "r") as f:
         sql = f.read()
     with connection.cursor() as cur:
@@ -16,16 +18,25 @@ def read_sql_execute(file: Path, connection: DatabaseConnection) -> None:
         connection.commit()
 
 
-def insert_to_db(values: Sequence, connection: DatabaseConnection) -> None:
+def print_iterable(iter: Iterable) -> None:
+    for row in iter:
+        print(row)
+
+def load_csv_to_dict(file: Path) -> list[dict[Hashable, Any]]:
+    data = pd.read_csv(file).to_dict("records") 
+    return data
+
+
+def insert_to_orders_combined(values: Sequence, connection: DatabaseConnection) -> None:
     sql_insert_string = "INSERT INTO orders_combined (id, date_time, customer_name, customer_email, product_name, product_price) VALUES (%s, %s, %s, %s, %s, %s)"
     with connection.cursor() as cursor:
         cursor.executemany(sql_insert_string, values)
     connection.commit()
 
 
-def drop_table(connection: DatabaseConnection) -> None:
+def drop_table(table: str, connection: DatabaseConnection) -> None:
     with connection.cursor() as cursor:
-        cursor.execute("DROP TABLE orders_combined;")
+        cursor.execute(f"DROP TABLE {table};")
 
 
 def main():
@@ -33,9 +44,9 @@ def main():
     values = data.values.tolist()
 
     with DatabaseConnection(config.dbconfig) as connection:
-        read_sql_execute(config.CREATE_ORDERS_COMBINED, connection)
-        insert_to_db(values, connection)
-        drop_table(connection)
+        run_sql_schema(config.CREATE_ORDERS_COMBINED, connection)
+        insert_to_orders_combined(values, connection)
+
 
 
 if __name__ == "__main__":

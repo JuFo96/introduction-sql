@@ -1,1 +1,0 @@
-INSERT INTO {self.table_name} (id, date_time, customer_name, customer_email, product_name, product_price) VALUES (%s, %s, %s, %s, %s, %s)"

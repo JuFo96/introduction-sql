@@ -1,4 +1,4 @@
-id,date_time,customer,product
+order_id,timestamp,customer_id,product_id
 0,2025-03-14T15:24:45+01:00,23,3
 1,2025-03-17T09:07:23+01:00,16,0
 2,2025-03-20T12:45:43+01:00,22,6

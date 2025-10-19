@@ -1,5 +1,6 @@
-DROP DATABASE relational_db IF EXISTS;
+DROP DATABASE IF EXISTS relational_db;
 CREATE DATABASE relational_db;
+USE relational_db;
 
 DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS products;
@@ -26,6 +27,6 @@ CREATE TABLE orders (
     customer_id INT NOT NULL,
     product_id INT NOT NULL,
     PRIMARY KEY (order_id),
-    CONSTRAINT fk_orders_products FOREIGN KEY (product_id) REFERENCES products(product_id),
-    CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+    CONSTRAINT fk_orders_products FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
+    CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
 );

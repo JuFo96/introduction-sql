@@ -1,5 +1,5 @@
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 
 # Directories
 BASE_DIR = Path(__file__).parent.parent.resolve()
@@ -19,10 +19,11 @@ CREATE_RELATIONAL_DB = BASE_DIR / SQL_DIR / "create_relational_db.sql"
 CREATE_ORDERS_COMBINED = BASE_DIR / SQL_DIR / "create_orders_combined.sql"
 
 # DB
-DB_NAME = "dbs"
+DB_NAME = "db"
+DB_TEST_NAME = "test_db"
 
 
-@dataclass
+@dataclass (frozen=True)
 class DatabaseConnectionConfig:
     host: str
     port: int
@@ -31,4 +32,4 @@ class DatabaseConnectionConfig:
     database: str | None
 
 
-dbconfig = DatabaseConnectionConfig("localhost", 3306, "root", "mypassword", "db")
+dbconfig = DatabaseConnectionConfig("localhost", 3306, "root", "mypassword", DB_NAME)

@@ -1,9 +1,9 @@
-from typing import Any, Iterable, Optional
-import config
-from mysql_db import DatabaseConnection
+from typing import Any, Iterable, Optional, Hashable
+
+from connection import DatabaseConnection
 
 
-class CRUD:
+class Table:
     """
     VALID COLS ["id", "date_time", "customer_name", "customer_email", "product_name", "product_price"]
     """
@@ -13,11 +13,18 @@ class CRUD:
         self.connection: DatabaseConnection = connection
         self.valid_columns: set = {
             "id",
+            "order_id",
+            "timestamp",
             "date_time",
+            "customer_id",
             "customer_name",
             "customer_email",
+            "product_id",
             "product_name",
             "product_price",
+            "price",
+            "email",
+            "*"
         }
 
     def validate_columns(self, cols: Iterable[str]) -> None:
@@ -34,8 +41,7 @@ class CRUD:
         invalid_cols = set(cols) - self.valid_columns
         if invalid_cols:
             raise ValueError(
-                f"Invalid column: {invalid_cols} is not in valid columns: {self.valid_columns}"
-            )
+                f"Invalid column: {invalid_cols} is not in valid columns: {self.valid_columns}")
 
     def insert(self, data: dict[str, Any]) -> None:
         """Inserts data dictionary into the table
@@ -55,14 +61,31 @@ class CRUD:
             values = [data[col] for col in cols]
 
             column_string = ", ".join(cols)
-            _num_cols = len(cols)
+            num_cols = len(cols)
             # ", ".join() mimics (%s, %s) based on num_cols
-            sql_string = f"INSERT INTO {self.table_name} ({column_string}) VALUES ({', '.join(['%s'] * _num_cols)})"
+            sql_string = f"INSERT INTO {self.table_name} ({column_string}) VALUES ({', '.join(['%s'] * num_cols)})"
             cur.execute(sql_string, values)
         self.connection.commit()
 
-    def insertmany(self, values: dict[str, list[Any]]) -> None:
-        pass
+    def insertmany(self, data: list[dict[Hashable, Any]]) -> None:
+        with self.connection.cursor() as cur:
+            if not data:
+                raise ValueError("Cannot insert empty data dictionary")
+
+            # Ensure cols is a list of strings
+            cols = [str(col) for col in data[0].keys()]
+            self.validate_columns(cols)
+            values = []
+            for row in data:
+                values.append([row[col] for col in cols])
+
+            column_string = ", ".join(cols)
+            num_cols = len(cols)
+
+            # ", ".join() mimics (%s, %s) based on num_cols
+            sql_string = f"INSERT INTO {self.table_name} ({column_string}) VALUES ({', '.join(['%s'] * num_cols)})"
+            cur.executemany(sql_string, values)
+        self.connection.commit()
 
     def select(
         self,
@@ -93,10 +116,10 @@ class CRUD:
         with self.connection.cursor() as cur:
             self.validate_columns(cols)
             column_string = ", ".join(cols)
-
-            sql_string = f"SELECT {column_string} FROM {self.table_name}"
+            
             values = []
-
+            sql_string = f"SELECT {column_string} FROM {self.table_name}"
+            
             if filters:
                 self.validate_columns(filters.keys())
                 where_list = [f"{col} = %s" for col in filters.keys()]
@@ -165,9 +188,3 @@ class CRUD:
                 values = list(filters.values())
 
                 cur.execute(sql_string, values)
-
-if __name__ == "__main__":
-    crud = CRUD("orders_combined", DatabaseConnection(config.dbconfig))
-    # crud.update()
-    # CRUD.insert([2, 2025, 3, 20, 11, 45, 43, 'Jess Stanton', 'jess.stanton@yahoo.com', 'Mouse', '443.55'])
-    # crud.validate_columns(cols = ["customer_emai", "123"])
